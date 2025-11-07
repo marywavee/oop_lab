@@ -1,4 +1,5 @@
 ﻿#include <iostream>
+#include <windows.h>
 
 using namespace std;
 
@@ -21,15 +22,51 @@ public:
         y = p.y;
     }
     ~Point() { cout << "[~Point]\n"; }
+
+
+    void setX(int x) { this->x = x; } //access metod
+    void setY(int y) { this->y = y; }
+    int getX() const { return x; }
+    int getY() const { return y; }
+
+  
+    void print() const { //metod print
+        cout << "Point: x=" << x << ", y=" << y << endl;
+    }
 };
 
+void test() {
+
+    //static
+    cout << "1. Статическое создание:" << endl;
+    Point p1;
+    p1.print();
+
+    //static + param
+    cout << "\n2. Статическое создание с параметрами:" << endl;
+    Point p2(10, 20);
+    p2.print();
+
+    //dinamic
+    cout << "\n3. Динамическое создание:" << endl;
+    Point* p3 = new Point(30, 40);
+    p3->print();
+
+    // copy constructor
+    cout << "\n4. Конструктор копирования:" << endl;
+    Point p4(p2);
+    p4.print();
+
+    // delete dinamic memory
+    cout << "\n5. Удаление динамического объекта:" << endl;
+    delete p3;
+}
 
 
 
 int main()
 {
-    Point p;
-    Point p2(1, 2);
-    Point p3(p2);
-    cout << "Hello World!\n";
+    setlocale(LC_ALL, "ru");
+    test();
+
 }
