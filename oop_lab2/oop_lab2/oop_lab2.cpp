@@ -117,6 +117,63 @@ void testInheritance() {
 }
 
 
+class Line {
+private:
+    Point start;    
+    Point* end;     
+
+public:
+    Line(int x1, int y1, int x2, int y2) : start(x1, y1) {
+        end = new Point(x2, y2);
+        cout << "Вызван конструктор Line(int x1, int y1, int x2, int y2)\n";
+    }
+
+    Line(const Line& other) : start(other.start) {
+        end = new Point(*(other.end));
+        cout << "Вызван конструктор копирования Line(const Line& other)\n";
+    }
+
+    ~Line() {
+        cout << "~Line()\n";
+        delete end;  // освобождаем динамическую память
+    }
+
+    void print() const {
+        cout << "Line: ";
+        cout << "start(" << start.getX() << "," << start.getY() << "), ";
+        cout << "end(" << end->getX() << "," << end->getY() << ")\n";
+    }
+
+
+    void setStart(int x, int y) {
+        start.setX(x);
+        start.setY(y);
+    }
+
+    void setEnd(int x, int y) {
+        end->setX(x);
+        end->setY(y);
+    }
+};
+
+void testComposition() {
+    cout << "\n\n\n";
+
+    cout << "1. Создание Line с композицией:\n";
+    Line line1(1, 1, 10, 10);
+    line1.print();
+
+    cout << "\n2. Конструктор копирования Line:\n";
+    Line line2 = line1;
+    line2.print();
+
+    cout << "\n3. Изменение точек в line2:\n";
+    line2.setStart(2, 2);
+    line2.setEnd(20, 20);
+    cout << "После изменения line2:\n";
+    line2.print();
+}
+
 int main()
 {
     setlocale(LC_ALL, "ru");
