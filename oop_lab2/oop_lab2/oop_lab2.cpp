@@ -7,17 +7,17 @@ class Point {
 public:
     int x, y;
     Point() { // default constructor
-        cout << "[Point] default\n";
+        cout << "[Point] Статичический\n";
         x = 0;
         y = 0;
     }
     Point(int x,int y) { //constructor with parametr
-        cout << "[Point] const. param.\n";
+        cout << "[Point] С параметрами\n";
         this -> x = x;
         this -> y = y;
     }
     Point(const Point &p) { //copy constructor
-        cout << "[Point] copy\n";
+        cout << "[Point] Копирования\n";
         x = p.x;
         y = p.y;
     }
@@ -63,10 +63,65 @@ void test() {
 }
 
 
+class ColoredPoint : public Point {
+private:
+    string color;
+public:
+    ColoredPoint() : Point() {
+        color = "black";
+        cout << "Вызван конструктор ColoredPoint() без параметров\n";
+    }
+    ColoredPoint(int x, int y, const string& color) : Point(x, y) {
+        this->color = color;
+        cout << "Вызван конструктор ColoredPoint(int x, int y, string color)\n";
+    }
+    ColoredPoint(const ColoredPoint& other) : Point(other) {
+        this->color = other.color;
+        cout << "Вызван конструктор копирования ColoredPoint(const ColoredPoint& other)\n";
+    }
+    ~ColoredPoint() {
+        cout << "~ColoredPoint()\n";
+    }
+    void setColor(const string& color) { this->color = color; }
+    string getColor() const { return color; }
+
+    void print() const { // переопределенный метод
+        cout << "ColoredPoint: x=" << getX() << ", y=" << getY() << ", color=" << color; 
+    }
+
+    void printBase() const {
+        Point::print();  
+    }
+ };
+
+void testInheritance() {
+    cout << "\n\n\n";
+    cout << "1. Создание ColoredPoint статически:\n";
+    ColoredPoint cp1(5, 15, "red");
+    cp1.print();
+
+    cout << "\n2. Создание ColoredPoint динамически:\n";
+    ColoredPoint* cp2 = new ColoredPoint(25, 35, "blue");
+    cp2->print();
+
+    cout << "\n3. Вызов методов:";
+    cp2->print();        
+    cp2->printBase();    
+
+    cout << "\n4. Указатель базового класса на объект наследника:\n";
+    Point* basePtr = new ColoredPoint(45, 55, "green");
+    basePtr->print();    
+
+    delete cp2;
+    delete basePtr; //deleting param
+}
+
 
 int main()
 {
     setlocale(LC_ALL, "ru");
     test();
+    testInheritance();
+
 
 }
