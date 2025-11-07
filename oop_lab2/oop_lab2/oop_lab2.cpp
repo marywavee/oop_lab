@@ -174,11 +174,57 @@ void testComposition() {
     line2.print();
 }
 
+void testAssignment() { // Присваивание и копирование
+
+    cout << "\n\n\n";
+    cout << "1. Копирование объектов:\n";
+    Point a(1, 2);
+    Point b(3, 4);
+    cout << "До присваивания:\n";
+    a.print();
+    b.print();
+
+    a = b;  // присваивание
+    cout << "После a = b:\n";
+    a.print();
+    b.print();
+
+    cout << "\n2. Изменение после присваивания:\n";
+    a.setX(100);
+    b.setY(200);
+    cout << "После изменения:\n";
+    a.print();
+    b.print();
+
+
+    cout << "\n3. Копирование указателей:\n";
+    Point* ptr1 = new Point(5, 6);
+    Point* ptr2 = new Point(7, 8);
+
+    cout << "До присваивания указателей:\n";
+    ptr1->print();
+    ptr2->print();
+
+    ptr1 = ptr2;  // присваивание указателей
+    cout << "После ptr1 = ptr2:\n";
+    ptr1->print();
+    ptr2->print();
+
+    cout << "\n4. Изменение через указатели:\n";
+    ptr1->setX(300);
+    cout << "После ptr1->setX(300):\n";
+    ptr1->print();
+    ptr2->print();
+
+    delete ptr2;
+}
+
 int main()
 {
     setlocale(LC_ALL, "ru");
     test();
     testInheritance();
+    testComposition();
 
 
 }
