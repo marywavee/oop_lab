@@ -219,12 +219,35 @@ void testAssignment() { // Присваивание и копирование
     delete ptr2;
 }
 
+void testVariableTypes() {
+    cout << "\n\n\n";
+
+    // MyBase * obj = new MyBase()
+    cout << "1. Point* ptr = new Point():\n";
+    Point* ptr1 = new Point(1, 1);
+    ptr1->print();
+
+    // MyBase * obj = new MyDeriv()
+    cout << "\n2. Point* ptr = new ColoredPoint():\n";
+    Point* ptr2 = new ColoredPoint(2, 2, "yellow");
+    ptr2->print();  // вызовется Point::print()
+
+    // MyBase obj = MyDeriv()
+    cout << "\n3. Point obj = ColoredPoint():\n";
+    Point p = ColoredPoint(3, 3, "purple");
+    p.print();  // вызовется только Point::print()
+
+    delete ptr1;
+    delete ptr2;
+}
 int main()
 {
     setlocale(LC_ALL, "ru");
     test();
     testInheritance();
     testComposition();
+    testAssignment();
+    testVariableTypes();
 
 
 }
