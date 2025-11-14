@@ -96,6 +96,20 @@ class Canvas(QWidget):
                 self.storage.addCircle(CCircle(pos))
 
             self.update()
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Delete:
+            # удаляем в обратном порядке
+            for i in range(self.storage.getCount() - 1, -1, -1):
+                if self.storage.getCircle(i).isSelected():
+                    self.storage.removeCircle(i)
+            self.update()
+        else:
+            super().keyPressEvent(event)
+    def resizeEvent(self,event):
+        self.update()
+        super().resizeEvent(event)
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
