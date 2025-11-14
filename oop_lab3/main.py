@@ -1,8 +1,26 @@
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')
+import sys
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
+                             QHBoxLayout, QPushButton, QMessageBox)
+from PyQt5.QtCore import Qt, QPoint
+from PyQt5.QtGui import QPainter, QColor, QPen, QBrush
+import math
+from typing import List, Optional
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+#Базовый абстрактный класс для графических объектов
+class GraphicObject:
+    def contains(self, point: QPoint) -> bool:
+
+        raise NotImplementedError()
+
+    def draw(self, painter: QPainter):
+
+        raise NotImplementedError()
+
+    def is_selected(self) -> bool:
+
+        raise NotImplementedError()
+
+    def set_selected(self, selected: bool):
+
+        raise NotImplementedError()
