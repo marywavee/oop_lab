@@ -1,17 +1,27 @@
 import sys
-from PySide6    .QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
-                             QHBoxLayout, QPushButton, QMessageBox)
-from PySide6.QtCore import QPoint
-from PyQt5.QtCore import Qt, QPoint
-from PyQt5.QtGui import QPainter, QColor, QPen, QBrush
-import math
-from typing import List, Optional
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QWidget, QVBoxLayout
+)
+from PySide6.QtCore import QPoint, Qt
+from PySide6.QtGui import QPainter, QPen, QBrush
 
 class CCircle:
     def __init__(self, center: QPoint, radius: int = 20):
         self._center = QPoint(center)
         self._radius = radius
         self._selected = False
+
+    def draw(self, painter: QPainter):
+        pen = QPen(Qt.red if self._selected else Qt.blue, 2)
+        brush = QBrush(Qt.white)
+        painter.setPen(pen)
+        painter.setBrush(brush)
+        painter.drawEllipse(self._center, self._radius, self._radius)
+
+    def contains(self, p: QPoint):
+        dx = p.x() - self._center.x()
+        dy = p.y() - self._center.y()
+        return dx * dx + dy * dy <= self._radius * self._radius
 
     def center(self):
         return QPoint(self._center)
@@ -46,24 +56,38 @@ class Storage:
         return iter(self._items)
 
 class Canvas(QWidget):
-    """Пустой виджет для рисования, пока ничего не делает."""
     def __init__(self):
         super().__init__()
         self.storage = Storage()
+        self.setFocusPolicy(Qt.StrongFocus)
 
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        # пока не рисуем ничего
-        painter.end()
+        for c in self.storage:
+            c.draw(painter)
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            pos = event.pos()
+
+
+            self.storage.addCircle(CCircle(pos))
+
+            self.update()
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Lab 3")
         self.resize(800, 600)
 
+        central = QWidget()
+        layout = QVBoxLayout(central)
+        self.canvas = Canvas()
+        layout.addWidget(self.canvas)
+        self.setCentralWidget(central)
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
