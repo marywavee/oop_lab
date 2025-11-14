@@ -66,12 +66,34 @@ class Canvas(QWidget):
         painter.setRenderHint(QPainter.Antialiasing)
         for c in self.storage:
             c.draw(painter)
+
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
+
             pos = event.pos()
+            ctrl = event.modifiers() & Qt.ControlModifier
+            clicked = False
 
+            for circle in reversed(list(self.storage)):
+                if circle.contains(pos):
+                    clicked = True
 
-            self.storage.addCircle(CCircle(pos))
+                    if not ctrl:
+                        # одиночное выделение
+                        for c in self.storage:
+                            c.setSelected(False)
+                        circle.setSelected(True)
+                    else:
+                        # >>> множественное выделение
+                        circle.setSelected(not circle.isSelected())
+
+                    break
+
+            if not clicked:
+                if not ctrl:
+                    for c in self.storage:
+                        c.setSelected(False)
+                self.storage.addCircle(CCircle(pos))
 
             self.update()
 class MainWindow(QMainWindow):
