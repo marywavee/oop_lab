@@ -7,7 +7,7 @@ import math
 from typing import List, Optional
 
 
-#Базовый абстрактный класс для графических объектов
+#Базовый абстрактный класс для графических объектов.
 class GraphicObject:
     def contains(self, point: QPoint) -> bool:
 
