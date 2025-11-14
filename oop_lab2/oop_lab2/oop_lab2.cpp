@@ -249,5 +249,5 @@ int main()
     testAssignment();
     testVariableTypes();
 
-
+    return 0; 
 }
