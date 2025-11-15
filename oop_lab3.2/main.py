@@ -21,14 +21,13 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.model = model
         self.setWindowTitle("mainWindow")
-        self.resize(600, 320)
+        self.resize(600, 300)
 
-        # Центральный виджет
         central = QWidget()
         self.setCentralWidget(central)
         root = QVBoxLayout(central)
-        root.setSpacing(15)
-        root.setContentsMargins(40, 25, 40, 30)
+        root.setSpacing(20)
+        root.setContentsMargins(40, 30, 40, 30)
 
         # === Заголовок: A <= B <= C ===
         header = QHBoxLayout()
@@ -60,27 +59,6 @@ class MainWindow(QMainWindow):
         header.addWidget(self.lblLE2)
         header.addWidget(self.lblC)
         root.addLayout(header)
-
-        # === Подписи A, B, C над колонками ===
-        labels_row = QHBoxLayout()
-        labels_row.setSpacing(40)
-
-        label_A = QLabel("A")
-        label_A.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        label_A.setStyleSheet("font-size: 18px; font-weight: bold; color: black;")
-
-        label_B = QLabel("B")
-        label_B.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        label_B.setStyleSheet("font-size: 18px; font-weight: bold; color: black;")
-
-        label_C = QLabel("C")
-        label_C.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        label_C.setStyleSheet("font-size: 18px; font-weight: bold; color: black;")
-
-        labels_row.addWidget(label_A)
-        labels_row.addWidget(label_B)
-        labels_row.addWidget(label_C)
-        root.addLayout(labels_row)
 
         # === Три колонки с контролами ===
         controls = QHBoxLayout()
@@ -144,9 +122,46 @@ class MainWindow(QMainWindow):
         controls.addLayout(colC)
 
         root.addLayout(controls)
-
-        # Принудительный белый фон
         central.setStyleSheet("background-color: white;")
+
+        # === СИНХРОНИЗАЦИЯ ===
+        self.setup_sync(self.a_text, self.a_spin, self.a_slider)
+        self.setup_sync(self.b_text, self.b_spin, self.b_slider)
+        self.setup_sync(self.c_text, self.c_spin, self.c_slider)
+
+    def setup_sync(self, text: QLineEdit, spin: QSpinBox, slider: QSlider):
+        def on_text_changed(input_str):
+            if not input_str:
+                return
+            try:
+                value = int(input_str)
+                if 0 <= value <= 100:
+                    self.update_all(text, spin, slider, value)
+            except ValueError:
+                pass
+
+        def on_spin_changed(value):
+            self.update_all(text, spin, slider, value)
+
+        def on_slider_changed(value):
+            self.update_all(text, spin, slider, value)
+
+        text.textChanged.connect(on_text_changed)
+        spin.valueChanged.connect(on_spin_changed)
+        slider.valueChanged.connect(on_slider_changed)
+
+    def update_all(self, text: QLineEdit, spin: QSpinBox, slider: QSlider, value: int):
+        text.blockSignals(True)
+        spin.blockSignals(True)
+        slider.blockSignals(True)
+
+        text.setText(str(value))
+        spin.setValue(value)
+        slider.setValue(value)
+
+        text.blockSignals(False)
+        spin.blockSignals(False)
+        slider.blockSignals(False)
 
 
 def main():
