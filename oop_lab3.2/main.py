@@ -10,7 +10,7 @@ from PyQt6.QtCore import Qt, pyqtSignal, QObject
 
 # === МОДЕЛЬ ===
 class Model(QObject):
-    data_changed = pyqtSignal()  # Одно уведомление
+    data_changed = pyqtSignal()
     MIN_VALUE = 0
     MAX_VALUE = 100
     SAVE_FILE = "values.json"
@@ -78,9 +78,8 @@ class Model(QObject):
                     a = max(self.MIN_VALUE, min(self.MAX_VALUE, data["A"]))
                     c = max(self.MIN_VALUE, min(self.MAX_VALUE, data["C"]))
                     b = max(self.MIN_VALUE, min(self.MAX_VALUE, data["B"]))
-                    # Применяем с валидацией
                     self.A, self.B, self.C = a, b, c
-                    self.set_A(a)  # Чтобы правила сработали
+                    self.set_A(a)
         except Exception as e:
             print(f"Load failed: {e}")
 
@@ -91,7 +90,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.model = model
         self.setWindowTitle("mainWindow")
-        self.resize(600, 300)
+        self.resize(600, 340)
 
         central = QWidget()
         self.setCentralWidget(central)
@@ -99,7 +98,7 @@ class MainWindow(QMainWindow):
         root.setSpacing(20)
         root.setContentsMargins(40, 30, 40, 30)
 
-        # === Заголовок A <= B <= C ===
+        # === Заголовок ===
         header = QHBoxLayout()
         header.setSpacing(20)
         for text in ["A", "<=", "B", "<=", "C"]:
@@ -141,15 +140,24 @@ class MainWindow(QMainWindow):
         controls.addLayout(colC)
         root.addLayout(controls)
 
+        # === СЧЁТЧИК ОБНОВЛЕНИЙ ===
+        self.update_label = QLabel("UI updates: 0")
+        self.update_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.update_label.setStyleSheet("font-size: 14px; color: gray;")
+        root.addWidget(self.update_label)
+
+        self.update_count = 0
+
         central.setStyleSheet("background-color: white;")
 
-        # === Инициализация UI ===
+        # === Инициализация ===
         self.update_ui()
+        self.update_count += 1
+        self.update_label.setText(f"UI updates: {self.update_count}")
 
-        # === Подписка на модель ===
-        self.model.data_changed.connect(self.update_ui)
+        # === Подписка ===
+        self.model.data_changed.connect(self.on_model_changed)
 
-        # === Подписка на контролы ===
         self.a_text.textChanged.connect(lambda t: self.try_set(self.model.set_A, t))
         self.a_spin.valueChanged.connect(lambda v: self.model.set_A(v))
         self.a_slider.valueChanged.connect(lambda v: self.model.set_A(v))
@@ -171,48 +179,35 @@ class MainWindow(QMainWindow):
         except ValueError:
             pass
 
+    def on_model_changed(self):
+        self.update_count += 1
+        self.update_label.setText(f"UI updates: {self.update_count}")
+        self.update_ui()
+
     def update_ui(self):
         a, b, c = self.model.A, self.model.B, self.model.C
 
-        # --- A ---
-        self.a_text.blockSignals(True)
-        self.a_spin.blockSignals(True)
-        self.a_slider.blockSignals(True)
-        self.a_text.setText(str(a))
-        self.a_spin.setValue(a)
-        self.a_slider.setValue(a)
-        self.a_text.blockSignals(False)
-        self.a_spin.blockSignals(False)
-        self.a_slider.blockSignals(False)
-
-        # --- B ---
-        self.b_text.blockSignals(True)
-        self.b_spin.blockSignals(True)
-        self.b_slider.blockSignals(True)
-        self.b_text.setText(str(b))
-        self.b_spin.setValue(b)
-        self.b_slider.setValue(b)
-        self.b_text.blockSignals(False)
-        self.b_spin.blockSignals(False)
-        self.b_slider.blockSignals(False)
-
-        # --- C ---
-        self.c_text.blockSignals(True)
-        self.c_spin.blockSignals(True)
-        self.c_slider.blockSignals(True)
-        self.c_text.setText(str(c))
-        self.c_spin.setValue(c)
-        self.c_slider.setValue(c)
-        self.c_text.blockSignals(False)
-        self.c_spin.blockSignals(False)
-        self.c_slider.blockSignals(False)
+        for text, spin, slider, val in [
+            (self.a_text, self.a_spin, self.a_slider, a),
+            (self.b_text, self.b_spin, self.b_slider, b),
+            (self.c_text, self.c_spin, self.c_slider, c)
+        ]:
+            text.blockSignals(True)
+            spin.blockSignals(True)
+            slider.blockSignals(True)
+            text.setText(str(val))
+            spin.setValue(val)
+            slider.setValue(val)
+            text.blockSignals(False)
+            spin.blockSignals(False)
+            slider.blockSignals(False)
 
     def closeEvent(self, event):
         self.model.save()
         super().closeEvent(event)
 
 
-# === ЗАПУСК ===
+
 def main():
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
