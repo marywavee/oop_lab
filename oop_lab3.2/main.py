@@ -1,21 +1,91 @@
 import sys
+import json
+import os
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QSpinBox, QSlider
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal, QObject
 
 
-class Model:
+# === МОДЕЛЬ ===
+class Model(QObject):
+    data_changed = pyqtSignal()  # Одно уведомление
     MIN_VALUE = 0
     MAX_VALUE = 100
+    SAVE_FILE = "values.json"
 
     def __init__(self):
+        super().__init__()
         self.A = 10
         self.B = 50
         self.C = 90
+        self._load()
+
+    def _emit_if_changed(self, old_a, old_b, old_c):
+        if (old_a != self.A or old_b != self.B or old_c != self.C):
+            self.data_changed.emit()
+
+    def set_A(self, value: int):
+        value = max(self.MIN_VALUE, min(self.MAX_VALUE, value))
+        old_a, old_b, old_c = self.A, self.B, self.C
+
+        self.A = value
+        if self.A > self.B:
+            self.B = self.A
+        if self.A > self.C:
+            self.C = self.A
+            self.B = self.A
+
+        self._emit_if_changed(old_a, old_b, old_c)
+
+    def set_B(self, value: int):
+        value = max(self.MIN_VALUE, min(self.MAX_VALUE, value))
+        old_a, old_b, old_c = self.A, self.B, self.C
+
+        self.B = max(self.A, min(self.C, value))
+
+        self._emit_if_changed(old_a, old_b, old_c)
+
+    def set_C(self, value: int):
+        value = max(self.MIN_VALUE, min(self.MAX_VALUE, value))
+        old_a, old_b, old_c = self.A, self.B, self.C
+
+        self.C = value
+        if self.C < self.B:
+            self.B = self.C
+        if self.C < self.A:
+            self.A = self.C
+            self.B = self.C
+
+        self._emit_if_changed(old_a, old_b, old_c)
+
+    def save(self):
+        data = {"A": self.A, "B": self.B, "C": self.C}
+        try:
+            with open(self.SAVE_FILE, "w") as f:
+                json.dump(data, f)
+        except Exception as e:
+            print(f"Save failed: {e}")
+
+    def _load(self):
+        if not os.path.exists(self.SAVE_FILE):
+            return
+        try:
+            with open(self.SAVE_FILE, "r") as f:
+                data = json.load(f)
+                if all(k in data for k in ("A", "B", "C")):
+                    a = max(self.MIN_VALUE, min(self.MAX_VALUE, data["A"]))
+                    c = max(self.MIN_VALUE, min(self.MAX_VALUE, data["C"]))
+                    b = max(self.MIN_VALUE, min(self.MAX_VALUE, data["B"]))
+                    # Применяем с валидацией
+                    self.A, self.B, self.C = a, b, c
+                    self.set_A(a)  # Чтобы правила сработали
+        except Exception as e:
+            print(f"Load failed: {e}")
 
 
+# === ПРЕДСТАВЛЕНИЕ ===
 class MainWindow(QMainWindow):
     def __init__(self, model: Model):
         super().__init__()
@@ -29,141 +99,120 @@ class MainWindow(QMainWindow):
         root.setSpacing(20)
         root.setContentsMargins(40, 30, 40, 30)
 
-        # === Заголовок: A <= B <= C ===
+        # === Заголовок A <= B <= C ===
         header = QHBoxLayout()
         header.setSpacing(20)
-
-        self.lblA = QLabel("A")
-        self.lblA.setStyleSheet("font-size: 32px; font-weight: bold; color: black;")
-        self.lblA.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.lblLE1 = QLabel("<=")
-        self.lblLE1.setStyleSheet("font-size: 32px; color: black;")
-        self.lblLE1.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.lblB = QLabel("B")
-        self.lblB.setStyleSheet("font-size: 32px; font-weight: bold; color: black;")
-        self.lblB.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.lblLE2 = QLabel("<=")
-        self.lblLE2.setStyleSheet("font-size: 32px; color: black;")
-        self.lblLE2.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.lblC = QLabel("C")
-        self.lblC.setStyleSheet("font-size: 32px; font-weight: bold; color: black;")
-        self.lblC.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        header.addWidget(self.lblA)
-        header.addWidget(self.lblLE1)
-        header.addWidget(self.lblB)
-        header.addWidget(self.lblLE2)
-        header.addWidget(self.lblC)
+        for text in ["A", "<=", "B", "<=", "C"]:
+            lbl = QLabel(text)
+            lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            style = "font-size: 32px; color: black;"
+            if text in ("A", "B", "C"):
+                style += " font-weight: bold;"
+            lbl.setStyleSheet(style)
+            header.addWidget(lbl)
         root.addLayout(header)
 
-        # === Три колонки с контролами ===
+        # === Контролы ===
         controls = QHBoxLayout()
         controls.setSpacing(40)
 
-        # --- Колонка A ---
-        colA = QVBoxLayout()
-        colA.setSpacing(10)
-        self.a_text = QLineEdit("10")
-        self.a_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.a_text.setStyleSheet("font-size: 16px; color: black; background-color: white; border: 1px solid gray;")
-        self.a_spin = QSpinBox()
-        self.a_spin.setRange(0, 100)
-        self.a_spin.setValue(10)
-        self.a_spin.setStyleSheet("color: black;")
-        self.a_slider = QSlider(Qt.Orientation.Horizontal)
-        self.a_slider.setRange(0, 100)
-        self.a_slider.setValue(10)
+        def make_column():
+            col = QVBoxLayout()
+            col.setSpacing(10)
+            text = QLineEdit()
+            text.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            text.setStyleSheet("font-size: 16px; color: black; background-color: white; border: 1px solid gray;")
+            spin = QSpinBox()
+            spin.setRange(0, 100)
+            spin.setStyleSheet("color: black;")
+            slider = QSlider(Qt.Orientation.Horizontal)
+            slider.setRange(0, 100)
+            col.addWidget(text)
+            col.addWidget(spin)
+            col.addWidget(slider)
+            return text, spin, slider, col
 
-        colA.addWidget(self.a_text)
-        colA.addWidget(self.a_spin)
-        colA.addWidget(self.a_slider)
+        self.a_text, self.a_spin, self.a_slider, colA = make_column()
+        self.b_text, self.b_spin, self.b_slider, colB = make_column()
+        self.c_text, self.c_spin, self.c_slider, colC = make_column()
+
         controls.addLayout(colA)
-
-        # --- Колонка B ---
-        colB = QVBoxLayout()
-        colB.setSpacing(10)
-        self.b_text = QLineEdit("50")
-        self.b_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.b_text.setStyleSheet("font-size: 16px; color: black; background-color: white; border: 1px solid gray;")
-        self.b_spin = QSpinBox()
-        self.b_spin.setRange(0, 100)
-        self.b_spin.setValue(50)
-        self.b_spin.setStyleSheet("color: black;")
-        self.b_slider = QSlider(Qt.Orientation.Horizontal)
-        self.b_slider.setRange(0, 100)
-        self.b_slider.setValue(50)
-
-        colB.addWidget(self.b_text)
-        colB.addWidget(self.b_spin)
-        colB.addWidget(self.b_slider)
         controls.addLayout(colB)
-
-        # --- Колонка C ---
-        colC = QVBoxLayout()
-        colC.setSpacing(10)
-        self.c_text = QLineEdit("90")
-        self.c_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.c_text.setStyleSheet("font-size: 16px; color: black; background-color: white; border: 1px solid gray;")
-        self.c_spin = QSpinBox()
-        self.c_spin.setRange(0, 100)
-        self.c_spin.setValue(90)
-        self.c_spin.setStyleSheet("color: black;")
-        self.c_slider = QSlider(Qt.Orientation.Horizontal)
-        self.c_slider.setRange(0, 100)
-        self.c_slider.setValue(90)
-
-        colC.addWidget(self.c_text)
-        colC.addWidget(self.c_spin)
-        colC.addWidget(self.c_slider)
         controls.addLayout(colC)
-
         root.addLayout(controls)
+
         central.setStyleSheet("background-color: white;")
 
-        # === СИНХРОНИЗАЦИЯ ===
-        self.setup_sync(self.a_text, self.a_spin, self.a_slider)
-        self.setup_sync(self.b_text, self.b_spin, self.b_slider)
-        self.setup_sync(self.c_text, self.c_spin, self.c_slider)
+        # === Инициализация UI ===
+        self.update_ui()
 
-    def setup_sync(self, text: QLineEdit, spin: QSpinBox, slider: QSlider):
-        def on_text_changed(input_str):
-            if not input_str:
-                return
-            try:
-                value = int(input_str)
-                if 0 <= value <= 100:
-                    self.update_all(text, spin, slider, value)
-            except ValueError:
-                pass
+        # === Подписка на модель ===
+        self.model.data_changed.connect(self.update_ui)
 
-        def on_spin_changed(value):
-            self.update_all(text, spin, slider, value)
+        # === Подписка на контролы ===
+        self.a_text.textChanged.connect(lambda t: self.try_set(self.model.set_A, t))
+        self.a_spin.valueChanged.connect(lambda v: self.model.set_A(v))
+        self.a_slider.valueChanged.connect(lambda v: self.model.set_A(v))
 
-        def on_slider_changed(value):
-            self.update_all(text, spin, slider, value)
+        self.b_text.textChanged.connect(lambda t: self.try_set(self.model.set_B, t))
+        self.b_spin.valueChanged.connect(lambda v: self.model.set_B(v))
+        self.b_slider.valueChanged.connect(lambda v: self.model.set_B(v))
 
-        text.textChanged.connect(on_text_changed)
-        spin.valueChanged.connect(on_spin_changed)
-        slider.valueChanged.connect(on_slider_changed)
+        self.c_text.textChanged.connect(lambda t: self.try_set(self.model.set_C, t))
+        self.c_spin.valueChanged.connect(lambda v: self.model.set_C(v))
+        self.c_slider.valueChanged.connect(lambda v: self.model.set_C(v))
 
-    def update_all(self, text: QLineEdit, spin: QSpinBox, slider: QSlider, value: int):
-        text.blockSignals(True)
-        spin.blockSignals(True)
-        slider.blockSignals(True)
+    def try_set(self, setter, text):
+        if not text.strip():
+            return
+        try:
+            value = int(text)
+            setter(value)
+        except ValueError:
+            pass
 
-        text.setText(str(value))
-        spin.setValue(value)
-        slider.setValue(value)
+    def update_ui(self):
+        a, b, c = self.model.A, self.model.B, self.model.C
 
-        text.blockSignals(False)
-        spin.blockSignals(False)
-        slider.blockSignals(False)
+        # --- A ---
+        self.a_text.blockSignals(True)
+        self.a_spin.blockSignals(True)
+        self.a_slider.blockSignals(True)
+        self.a_text.setText(str(a))
+        self.a_spin.setValue(a)
+        self.a_slider.setValue(a)
+        self.a_text.blockSignals(False)
+        self.a_spin.blockSignals(False)
+        self.a_slider.blockSignals(False)
+
+        # --- B ---
+        self.b_text.blockSignals(True)
+        self.b_spin.blockSignals(True)
+        self.b_slider.blockSignals(True)
+        self.b_text.setText(str(b))
+        self.b_spin.setValue(b)
+        self.b_slider.setValue(b)
+        self.b_text.blockSignals(False)
+        self.b_spin.blockSignals(False)
+        self.b_slider.blockSignals(False)
+
+        # --- C ---
+        self.c_text.blockSignals(True)
+        self.c_spin.blockSignals(True)
+        self.c_slider.blockSignals(True)
+        self.c_text.setText(str(c))
+        self.c_spin.setValue(c)
+        self.c_slider.setValue(c)
+        self.c_text.blockSignals(False)
+        self.c_spin.blockSignals(False)
+        self.c_slider.blockSignals(False)
+
+    def closeEvent(self, event):
+        self.model.save()
+        super().closeEvent(event)
 
 
+# === ЗАПУСК ===
 def main():
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
