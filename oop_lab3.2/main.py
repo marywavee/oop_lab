@@ -5,115 +5,156 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 
-class Model:
-    class Model:
-        MIN_VALUE = 0
-        MAX_VALUE = 100
 
-        def __init__(self):
-            self.A = 0
-            self.B = 0
-            self.C = 0
+class Model:
+    MIN_VALUE = 0
+    MAX_VALUE = 100
+
+    def __init__(self):
+        self.A = 10
+        self.B = 50
+        self.C = 90
+
 
 class MainWindow(QMainWindow):
     def __init__(self, model: Model):
         super().__init__()
-
         self.model = model
-
         self.setWindowTitle("mainWindow")
-        self.resize(900, 350)
+        self.resize(600, 320)
 
+        # Центральный виджет
         central = QWidget()
+        self.setCentralWidget(central)
         root = QVBoxLayout(central)
+        root.setSpacing(15)
+        root.setContentsMargins(40, 25, 40, 30)
 
-        titles = QHBoxLayout()
+        # === Заголовок: A <= B <= C ===
+        header = QHBoxLayout()
+        header.setSpacing(20)
 
         self.lblA = QLabel("A")
+        self.lblA.setStyleSheet("font-size: 32px; font-weight: bold; color: black;")
         self.lblA.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lblA.setStyleSheet("font-size: 32px; font-weight: bold;")
 
         self.lblLE1 = QLabel("<=")
+        self.lblLE1.setStyleSheet("font-size: 32px; color: black;")
         self.lblLE1.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lblLE1.setStyleSheet("font-size: 32px;")
 
         self.lblB = QLabel("B")
+        self.lblB.setStyleSheet("font-size: 32px; font-weight: bold; color: black;")
         self.lblB.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lblB.setStyleSheet("font-size: 32px; font-weight: bold;")
 
         self.lblLE2 = QLabel("<=")
+        self.lblLE2.setStyleSheet("font-size: 32px; color: black;")
         self.lblLE2.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lblLE2.setStyleSheet("font-size: 32px;")
 
         self.lblC = QLabel("C")
+        self.lblC.setStyleSheet("font-size: 32px; font-weight: bold; color: black;")
         self.lblC.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lblC.setStyleSheet("font-size: 32px; font-weight: bold;")
 
-        titles.addWidget(self.lblA)
-        titles.addWidget(self.lblLE1)
-        titles.addWidget(self.lblB)
-        titles.addWidget(self.lblLE2)
-        titles.addWidget(self.lblC)
+        header.addWidget(self.lblA)
+        header.addWidget(self.lblLE1)
+        header.addWidget(self.lblB)
+        header.addWidget(self.lblLE2)
+        header.addWidget(self.lblC)
+        root.addLayout(header)
 
-        root.addLayout(titles)
+        # === Подписи A, B, C над колонками ===
+        labels_row = QHBoxLayout()
+        labels_row.setSpacing(40)
 
-        row_widgets = QHBoxLayout()
+        label_A = QLabel("A")
+        label_A.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        label_A.setStyleSheet("font-size: 18px; font-weight: bold; color: black;")
 
-        #Колонка A
+        label_B = QLabel("B")
+        label_B.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        label_B.setStyleSheet("font-size: 18px; font-weight: bold; color: black;")
+
+        label_C = QLabel("C")
+        label_C.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        label_C.setStyleSheet("font-size: 18px; font-weight: bold; color: black;")
+
+        labels_row.addWidget(label_A)
+        labels_row.addWidget(label_B)
+        labels_row.addWidget(label_C)
+        root.addLayout(labels_row)
+
+        # === Три колонки с контролами ===
+        controls = QHBoxLayout()
+        controls.setSpacing(40)
+
+        # --- Колонка A ---
         colA = QVBoxLayout()
-        self.a_text = QLineEdit()     #
+        colA.setSpacing(10)
+        self.a_text = QLineEdit("10")
+        self.a_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.a_text.setStyleSheet("font-size: 16px; color: black; background-color: white; border: 1px solid gray;")
         self.a_spin = QSpinBox()
         self.a_spin.setRange(0, 100)
+        self.a_spin.setValue(10)
+        self.a_spin.setStyleSheet("color: black;")
         self.a_slider = QSlider(Qt.Orientation.Horizontal)
         self.a_slider.setRange(0, 100)
+        self.a_slider.setValue(10)
 
         colA.addWidget(self.a_text)
         colA.addWidget(self.a_spin)
         colA.addWidget(self.a_slider)
+        controls.addLayout(colA)
 
-        #Колонка B
+        # --- Колонка B ---
         colB = QVBoxLayout()
-        self.b_text = QLineEdit()
+        colB.setSpacing(10)
+        self.b_text = QLineEdit("50")
+        self.b_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.b_text.setStyleSheet("font-size: 16px; color: black; background-color: white; border: 1px solid gray;")
         self.b_spin = QSpinBox()
         self.b_spin.setRange(0, 100)
+        self.b_spin.setValue(50)
+        self.b_spin.setStyleSheet("color: black;")
         self.b_slider = QSlider(Qt.Orientation.Horizontal)
         self.b_slider.setRange(0, 100)
+        self.b_slider.setValue(50)
 
         colB.addWidget(self.b_text)
         colB.addWidget(self.b_spin)
         colB.addWidget(self.b_slider)
+        controls.addLayout(colB)
 
-        #Колонка C
+        # --- Колонка C ---
         colC = QVBoxLayout()
-        self.c_text = QLineEdit()
+        colC.setSpacing(10)
+        self.c_text = QLineEdit("90")
+        self.c_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.c_text.setStyleSheet("font-size: 16px; color: black; background-color: white; border: 1px solid gray;")
         self.c_spin = QSpinBox()
         self.c_spin.setRange(0, 100)
+        self.c_spin.setValue(90)
+        self.c_spin.setStyleSheet("color: black;")
         self.c_slider = QSlider(Qt.Orientation.Horizontal)
         self.c_slider.setRange(0, 100)
+        self.c_slider.setValue(90)
 
         colC.addWidget(self.c_text)
         colC.addWidget(self.c_spin)
         colC.addWidget(self.c_slider)
+        controls.addLayout(colC)
 
-        # Добавляем 3 колонки
-        row_widgets.addLayout(colA)
-        row_widgets.addLayout(colB)
-        row_widgets.addLayout(colC)
+        root.addLayout(controls)
 
-        root.addLayout(row_widgets)
-
-        self.setCentralWidget(central)
-        self.setStyleSheet("background-color: white;")
-
+        # Принудительный белый фон
+        central.setStyleSheet("background-color: white;")
 
 
 def main():
     app = QApplication(sys.argv)
-
+    app.setStyle("Fusion")
     model = Model()
     window = MainWindow(model)
     window.show()
-
     sys.exit(app.exec())
 
 
