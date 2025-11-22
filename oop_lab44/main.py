@@ -77,13 +77,43 @@ class Circle(Shape):
         return False
 
 
+class Rectangle(Shape):
+    def __init__(self, x: int, y: int, w: int = 100, h: int = 70, color=QColor):
+        super().__init__(color)
+        self.rect = QRect(x, y, w, h)
+
+    def draw(self, painter: QPainter):
+        painter.setPen(QPen(self.color, 3))
+        painter.setBrush(QBrush(self.color) if self.selected else QBrush())
+        painter.drawRect(self.rect)
+
+        if self.selected:
+            painter.setPen(QPen(Qt.GlobalColor.black, 1, Qt.PenStyle.DashLine))
+            painter.setBrush(QBrush())
+            painter.drawRect(self.rect.adjusted(-6, -6, 12, 12))
+
+    def bounding_rect(self) -> QRect:
+        return self.rect.adjusted(-10, -10, 20, 20)
+
+    def contains(self, point: QPoint) -> bool:
+        return self.rect.adjusted(-10, -10, 10, 10).contains(point)
+
+    def move_by(self, dx: int, dy: int, canvas: QWidget) -> bool:
+        new_rect = self.rect.translated(dx, dy)
+        test_rect = self.bounding_rect().translated(dx, dy)
+        if canvas.rect().contains(test_rect):
+            self.rect = new_rect
+            return True
+        return False
+
+
 class Canvas(QWidget):
     def __init__(self):
         super().__init__()
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.storage = ShapeStorage()
         self.current_color = QColor("#0066ff")
-        self.current_tool = "pointer"
+        self.current_shape_type = "circle"        # по умолчанию — круги
         self.drag_start = None
         self.selected_shapes = set()
 
@@ -99,14 +129,6 @@ class Canvas(QWidget):
         if event.button() != Qt.MouseButton.LeftButton:
             return
         pos = event.pos()
-
-        if self.current_tool == "circle":
-            circle = Circle(pos, 40, self.current_color)
-            self.storage.add(circle)
-            self.deselect_all()
-            self.select_shape(circle)
-            self.update()
-            return
 
         hit = None
         for shape in reversed(list(self.storage)):
@@ -125,6 +147,15 @@ class Canvas(QWidget):
         else:
             if not ctrl:
                 self.deselect_all()
+            shape = None
+            if self.current_shape_type == "circle":
+                shape = Circle(pos, 40, self.current_color)
+            elif self.current_shape_type == "rectangle":
+                shape = Rectangle(pos.x() - 50, pos.y() - 35, 100, 70, self.current_color)
+
+            if shape:
+                self.storage.add(shape)
+                self.select_shape(shape)
 
         self.drag_start = pos
         self.update()
@@ -191,8 +222,8 @@ class Canvas(QWidget):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("ЛР4 — Редактор кругов")
-        self.resize(1000, 700)
+        self.setWindowTitle("ЛР4 — Круги и прямоугольники")
+        self.resize(1100, 750)
 
         central = QWidget()
         layout = QVBoxLayout(central)
@@ -210,18 +241,18 @@ class MainWindow(QMainWindow):
         group = QActionGroup(self)
         group.setExclusive(True)
 
-        pointer = QAction("Указатель", self)
-        pointer.setCheckable(True)
-        pointer.setChecked(True)
-        pointer.triggered.connect(lambda: setattr(self.canvas, "current_tool", "pointer"))
-        group.addAction(pointer)
-        tb.addAction(pointer)
+        circle_act = QAction("Круг", self)
+        circle_act.setCheckable(True)
+        circle_act.setChecked(True)
+        circle_act.triggered.connect(lambda: setattr(self.canvas, "current_shape_type", "circle"))
+        group.addAction(circle_act)
+        tb.addAction(circle_act)
 
-        circle = QAction("Круг", self)
-        circle.setCheckable(True)
-        circle.triggered.connect(lambda: setattr(self.canvas, "current_tool", "circle"))
-        group.addAction(circle)
-        tb.addAction(circle)
+        rect_act = QAction("Прямоугольник", self)
+        rect_act.setCheckable(True)
+        rect_act.triggered.connect(lambda: setattr(self.canvas, "current_shape_type", "rectangle"))
+        group.addAction(rect_act)
+        tb.addAction(rect_act)
 
         tb.addSeparator()
 
