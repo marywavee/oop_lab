@@ -432,7 +432,7 @@ class Canvas(QWidget):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("main")
+        self.setWindowTitle("mainWindow")
         self.resize(1200, 800)
         central = QWidget()
         layout = QVBoxLayout(central)
