@@ -113,6 +113,34 @@ class Triangle(Shape):
         return False
 
 
+class LineSegment(Shape):
+    def __init__(self, p1: QPoint, p2: QPoint, color=QColor):
+        super().__init__(color)
+        self.p1 = QPoint(p1)
+        self.p2 = QPoint(p2)
+    def draw(self, painter: QPainter):
+        painter.setPen(QPen(self.color, 4, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
+        painter.drawLine(self.p1, self.p2)
+        if self.selected:
+            painter.setPen(QPen(Qt.GlobalColor.black, 1, Qt.PenStyle.DashLine))
+            painter.drawRect(self.bounding_rect().adjusted(-6, -6, 12, 12))
+    def bounding_rect(self) -> QRect:
+        return QRect(self.p1, self.p2).normalized().adjusted(-15, -15, 30, 30)
+    def contains(self, point: QPoint) -> bool:
+        from PyQt6.QtCore import QLineF
+        line = QLineF(self.p1, self.p2)
+        return line.distanceToPoint(point) <= 12
+    def move_by(self, dx: int, dy: int, canvas: QWidget) -> bool:
+        np1 = self.p1 + QPoint(dx, dy)
+        np2 = self.p2 + QPoint(dx, dy)
+        test_rect = QRect(np1, np2).normalized().adjusted(-15, -15, 30, 30)
+        if canvas.rect().contains(test_rect):
+            self.p1 = np1
+            self.p2 = np2
+            return True
+        return False
+
+
 class Canvas(QWidget):
     def __init__(self):
         super().__init__()
@@ -151,6 +179,8 @@ class Canvas(QWidget):
                 shape = Rectangle(pos.x()-50, pos.y()-35, 100, 70, self.current_color)
             elif self.current_shape_type == "triangle":
                 shape = Triangle(pos, 60, self.current_color)
+            elif self.current_shape_type == "line":
+                shape = LineSegment(QPoint(pos.x()-60, pos.y()), QPoint(pos.x()+60, pos.y()), self.current_color)
             if shape:
                 self.storage.add(shape)
                 self.select_shape(shape)
@@ -211,7 +241,7 @@ class Canvas(QWidget):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("ЛР4 — Круги, прямоугольники, треугольники")
+        self.setWindowTitle("ЛР4 — Все фигуры")
         self.resize(1100, 750)
         central = QWidget()
         layout = QVBoxLayout(central)
@@ -227,7 +257,8 @@ class MainWindow(QMainWindow):
         group = QActionGroup(self)
         group.setExclusive(True)
 
-        for name, text in [("circle", "Круг"), ("rectangle", "Прямоугольник"), ("triangle", "Треугольник")]:
+        tools = [("circle", "Круг"), ("rectangle", "Прямоугольник"), ("triangle", "Треугольник"), ("line", "Отрезок")]
+        for name, text in tools:
             act = QAction(text, self)
             act.setCheckable(True)
             if name == "circle": act.setChecked(True)
