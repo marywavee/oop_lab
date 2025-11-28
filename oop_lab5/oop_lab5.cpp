@@ -1,20 +1,68 @@
-﻿// oop_lab5.cpp : Этот файл содержит функцию "main". Здесь начинается и заканчивается выполнение программы.
-//
+﻿#include <iostream>
+#include <string>
+using namespace std;
 
-#include <iostream>
+// Базовый класс
+class Base {
+public:
+    Base() {
+        cout << "Base constructor" << endl;
+    }
 
-int main()
-{
-    std::cout << "Hello World!\n";
+    // Обычный метод (не виртуальный)
+    void method1() {
+        cout << "Base::method1()" << endl;
+        this->method2(); // Вызов method2 из этого же класса
+    }
+
+    // Метод, который будет перекрываться
+    void method2() {
+        cout << "Base::method2()" << endl;
+    }
+
+    ~Base() {
+        cout << "Base destructor" << endl;
+    }
+};
+
+// Класс-потомок
+class Desc : public Base {
+public:
+    Desc() {
+        cout << "Desc constructor" << endl;
+    }
+
+    // Перекрываем method2 (не виртуальный!)
+    void method2() {
+        cout << "Desc::method2()" << endl;
+    }
+
+    ~Desc() {
+        cout << "Desc destructor" << endl;
+    }
+};
+
+void testOverriding() {
+    cout << "=== Testing method overriding ===" << endl;
+
+    cout << "\n1. Base object:" << endl;
+    Base base;
+    base.method1(); // Вызовет Base::method2()
+
+    cout << "\n2. Desc object:" << endl;
+    Desc desc;
+    desc.method1(); // Вызовет Base::method2() (!)
+
+    cout << "\n3. Direct method calls:" << endl;
+    base.method2();  // Base::method2()
+    desc.method2();  // Desc::method2()
+
+    cout << "\n4. Through base pointer:" << endl;
+    Base* basePtr = &desc;
+    basePtr->method2(); // Base::method2() (!)
 }
 
-// Запуск программы: CTRL+F5 или меню "Отладка" > "Запуск без отладки"
-// Отладка программы: F5 или меню "Отладка" > "Запустить отладку"
-
-// Советы по началу работы 
-//   1. В окне обозревателя решений можно добавлять файлы и управлять ими.
-//   2. В окне Team Explorer можно подключиться к системе управления версиями.
-//   3. В окне "Выходные данные" можно просматривать выходные данные сборки и другие сообщения.
-//   4. В окне "Список ошибок" можно просматривать ошибки.
-//   5. Последовательно выберите пункты меню "Проект" > "Добавить новый элемент", чтобы создать файлы кода, или "Проект" > "Добавить существующий элемент", чтобы добавить в проект существующие файлы кода.
-//   6. Чтобы снова открыть этот проект позже, выберите пункты меню "Файл" > "Открыть" > "Проект" и выберите SLN-файл.
+int main() {
+    testOverriding();
+    return 0;
+}
