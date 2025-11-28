@@ -1,28 +1,31 @@
 ﻿#include <iostream>
 #include <string>
-#include <locale>
+
 using namespace std;
 
-// Базовый класс
+// Базовый класс для тестирования передачи объектов
 class Base {
 public:
     Base() {
         cout << "Base constructor" << endl;
     }
 
-    // Обычный метод (не виртуальный)
-    void method1() {
-        cout << "Base::method1()" << endl;
-        this->method2(); // Вызов method2 из этого же класса
+    // Конструктор копирования
+    Base(const Base& obj) {
+        cout << "Base copy constructor" << endl;
     }
 
-    // Метод, который будет перекрываться
-    void method2() {
-        cout << "Base::method2()" << endl;
+    // Конструктор из указателя
+    Base(Base* obj) {
+        cout << "Base pointer constructor" << endl;
     }
 
-    ~Base() {
+    virtual ~Base() {
         cout << "Base destructor" << endl;
+    }
+
+    virtual void show() {
+        cout << "Это объект Base" << endl;
     }
 };
 
@@ -33,16 +36,142 @@ public:
         cout << "Desc constructor" << endl;
     }
 
-    // Перекрываем method2 (не виртуальный!)
-    void method2() {
-        cout << "Desc::method2()" << endl;
+    // Конструктор копирования
+    Desc(const Desc& obj) {
+        cout << "Desc copy constructor" << endl;
     }
 
-    ~Desc() {
+    // Конструктор из указателя
+    Desc(Desc* obj) {
+        cout << "Desc pointer constructor" << endl;
+    }
+
+    virtual ~Desc() {
         cout << "Desc destructor" << endl;
+    }
+
+    virtual void show() override {
+        cout << "Это объект Desc" << endl;
+    }
+
+    void specialMethod() {
+        cout << "Специальный метод Desc" << endl;
     }
 };
 
+// Функции для тестирования передачи объектов
+void func1(Base obj) {
+    cout << "--- Внутри func1(Base obj) ---" << endl;
+    obj.show();
+    cout << "--- Выход из func1 ---" << endl;
+}
+
+void func2(Base* obj) {
+    cout << "--- Внутри func2(Base* obj) ---" << endl;
+    obj->show();
+
+    // Попытка безопасного приведения
+    Desc* descPtr = dynamic_cast<Desc*>(obj);
+    if (descPtr) {
+        cout << "Безопасное приведение удалось: ";
+        descPtr->specialMethod();
+    }
+    else {
+        cout << "Безопасное приведение не удалось" << endl;
+    }
+    cout << "--- Выход из func2 ---" << endl;
+}
+
+void func3(Base& obj) {
+    cout << "--- Внутри func3(Base& obj) ---" << endl;
+    obj.show();
+
+    // Попытка безопасного приведения
+    Desc* descPtr = dynamic_cast<Desc*>(&obj);
+    if (descPtr) {
+        cout << "Безопасное приведение удалось: ";
+        descPtr->specialMethod();
+    }
+    else {
+        cout << "Безопасное приведение не удалось" << endl;
+    }
+    cout << "--- Выход из func3 ---" << endl;
+}
+
+void testObjectPassing() {
+    cout << "\n=== Тестирование передачи объектов в функции ===" << endl;
+
+    cout << "\n--- Тест 1: Передача Base по значению ---" << endl;
+    {
+        Base base;
+        cout << "До вызова func1:" << endl;
+        func1(base);
+        cout << "После вызова func1:" << endl;
+    }
+
+    cout << "\n--- Тест 2: Передача Base по указателю ---" << endl;
+    {
+        Base base;
+        cout << "До вызова func2:" << endl;
+        func2(&base);
+        cout << "После вызова func2:" << endl;
+    }
+
+    cout << "\n--- Тест 3: Передача Base по ссылке ---" << endl;
+    {
+        Base base;
+        cout << "До вызова func3:" << endl;
+        func3(base);
+        cout << "После вызова func3:" << endl;
+    }
+
+    cout << "\n--- Тест 4: Передача Desc по значению ---" << endl;
+    {
+        Desc desc;
+        cout << "До вызова func1:" << endl;
+        func1(desc); // Произойдет срезка (slicing)!
+        cout << "После вызова func1:" << endl;
+    }
+
+    cout << "\n--- Тест 5: Передача Desc по указателю ---" << endl;
+    {
+        Desc desc;
+        cout << "До вызова func2:" << endl;
+        func2(&desc);
+        cout << "После вызова func2:" << endl;
+    }
+
+    cout << "\n--- Тест 6: Передача Desc по ссылке ---" << endl;
+    {
+        Desc desc;
+        cout << "До вызова func3:" << endl;
+        func3(desc);
+        cout << "После вызова func3:" << endl;
+    }
+
+    cout << "\n--- Тест 7: Динамическое создание объектов ---" << endl;
+    {
+        Base* basePtr = new Base();
+        Desc* descPtr = new Desc();
+
+        cout << "Вызов func2 с динамическим Base:" << endl;
+        func2(basePtr);
+
+        cout << "Вызов func2 с динамическим Desc:" << endl;
+        func2(descPtr);
+
+        cout << "Вызов func3 с динамическим Base:" << endl;
+        func3(*basePtr);
+
+        cout << "Вызов func3 с динамическим Desc:" << endl;
+        func3(*descPtr);
+
+        delete basePtr;
+        delete descPtr;
+    }
+}
+
+// Остальные классы и функции из предыдущих коммитов
 class VirtualBase {
 public:
     VirtualBase() {
@@ -51,15 +180,13 @@ public:
 
     void method1() {
         cout << "VirtualBase::method1()" << endl;
-        this->method2(); // Вызов виртуального method2
+        this->method2();
     }
 
-    // Виртуальный метод
     virtual void method2() {
         cout << "VirtualBase::method2()" << endl;
     }
 
-    // Виртуальный деструктор
     virtual ~VirtualBase() {
         cout << "VirtualBase destructor" << endl;
     }
@@ -71,7 +198,6 @@ public:
         cout << "VirtualDesc constructor" << endl;
     }
 
-    // Переопределяем виртуальный метод
     virtual void method2() override {
         cout << "VirtualDesc::method2()" << endl;
     }
@@ -81,168 +207,26 @@ public:
     }
 };
 
-class TypeBase {
-public:
-    TypeBase() {
-        cout << "TypeBase constructor" << endl;
-    }
-
-    // Метод для получения имени класса
-    virtual string classname() const {
-        return "TypeBase";
-    }
-
-    // Метод для проверки принадлежности классу
-    virtual bool isA(const string& className) const {
-        return className == "TypeBase";
-    }
-
-    virtual ~TypeBase() {
-        cout << "TypeBase destructor" << endl;
-    }
-};
-
-class TypeDesc : public TypeBase {
-public:
-    TypeDesc() {
-        cout << "TypeDesc constructor" << endl;
-    }
-
-    virtual string classname() const override {
-        return "TypeDesc";
-    }
-
-    virtual bool isA(const string& className) const override {
-        return className == "TypeDesc" || TypeBase::isA(className);
-    }
-
-    virtual ~TypeDesc() {
-        cout << "TypeDesc destructor" << endl;
-    }
-};
-
-class TypeDesc2 : public TypeDesc {
-public:
-    TypeDesc2() {
-        cout << "TypeDesc2 constructor" << endl;
-    }
-
-    virtual string classname() const override {
-        return "TypeDesc2";
-    }
-
-    virtual bool isA(const string& className) const override {
-        return className == "TypeDesc2" || TypeDesc::isA(className);
-    }
-
-    void specialMethod() {
-        cout << "TypeDesc2::specialMethod() - специальный метод потомка" << endl;
-    }
-
-    virtual ~TypeDesc2() {
-        cout << "TypeDesc2 destructor" << endl;
-    }
-};
-
-void testOverriding() {
-    cout << "=== Тестирование перекрытия методов ===" << endl;
-
-    cout << "\n1. Объект Base:" << endl;
-    Base base;
-    base.method1(); // Вызовет Base::method2()
-
-    cout << "\n2. Объект Desc:" << endl;
-    Desc desc;
-    desc.method1(); // Вызовет Base::method2() (!)
-
-    cout << "\n3. Прямые вызовы методов:" << endl;
-    base.method2();  // Base::method2()
-    desc.method2();  // Desc::method2()
-
-    cout << "\n4. Через указатель на базовый класс:" << endl;
-    Base* basePtr = &desc;
-    basePtr->method2(); // Base::method2() (!)
-}
-
 void testVirtualMethods() {
     cout << "\n=== Тестирование виртуальных методов ===" << endl;
 
-    cout << "\n1. Объект VirtualBase:" << endl;
     VirtualBase vbase;
-    vbase.method1(); // Вызовет VirtualBase::method2()
+    vbase.method1();
 
-    cout << "\n2. Объект VirtualDesc:" << endl;
     VirtualDesc vdesc;
-    vdesc.method1(); // Вызовет VirtualDesc::method2()!
+    vdesc.method1();
 
-    cout << "\n3. Через указатель на базовый класс:" << endl;
     VirtualBase* vbasePtr = &vdesc;
-    vbasePtr->method2(); // VirtualDesc::method2()!
+    vbasePtr->method2();
 
-    cout << "\n4. Тест с динамическим выделением памяти:" << endl;
     VirtualBase* ptr = new VirtualDesc();
-    ptr->method1(); // Вызовет VirtualDesc::method2()
-    delete ptr;     // Вызовет правильные деструкторы благодаря виртуальности
-}
-
-void testTypeChecking() {
-    cout << "\n=== Тестирование проверки типов ===" << endl;
-
-    TypeBase base;
-    TypeDesc desc;
-    TypeDesc2 desc2;
-
-    TypeBase* ptr1 = &base;
-    TypeBase* ptr2 = &desc;
-    TypeBase* ptr3 = &desc2;
-
-    cout << "\n1. Использование метода classname():" << endl;
-    cout << "ptr1->classname(): " << ptr1->classname() << endl;
-    cout << "ptr2->classname(): " << ptr2->classname() << endl;
-    cout << "ptr3->classname(): " << ptr3->classname() << endl;
-
-    cout << "\n2. Использование метода isA():" << endl;
-    cout << "ptr2->isA(\"TypeBase\"): " << ptr2->isA("TypeBase") << endl;
-    cout << "ptr2->isA(\"TypeDesc\"): " << ptr2->isA("TypeDesc") << endl;
-    cout << "ptr2->isA(\"TypeDesc2\"): " << ptr2->isA("TypeDesc2") << endl;
-
-    cout << "\n3. Ручная проверка типа и приведение:" << endl;
-    if (ptr2->isA("TypeDesc")) {
-        TypeDesc* manualCast = (TypeDesc*)ptr2;
-        cout << "Ручное приведение успешно" << endl;
-    }
-
-    cout << "\n4. Опасное приведение (без проверки):" << endl;
-    // TypeDesc2* dangerousCast = (TypeDesc2*)ptr2; // Опасно
-    // dangerousCast->specialMethod(); // Неопределенное поведение
-
-    cout << "\n5. Безопасное приведение с проверкой:" << endl;
-    if (ptr3->isA("TypeDesc2")) {
-        TypeDesc2* safeCast = (TypeDesc2*)ptr3;
-        safeCast->specialMethod(); // Безопасно
-    }
-
-    cout << "\n6. Использование dynamic_cast:" << endl;
-    TypeDesc2* dynamicCast = dynamic_cast<TypeDesc2*>(ptr3);
-    if (dynamicCast) {
-        cout << "dynamic_cast успешен" << endl;
-        dynamicCast->specialMethod();
-    }
-    else {
-        cout << "dynamic_cast не удался" << endl;
-    }
-
-    // Попытка приведения неподходящего типа
-    TypeDesc2* failedCast = dynamic_cast<TypeDesc2*>(ptr2);
-    if (!failedCast) {
-        cout << "dynamic_cast для неподходящего типа вернул nullptr" << endl;
-    }
+    ptr->method1();
+    delete ptr;
 }
 
 int main() {
     setlocale(LC_ALL, "ru");
-    testOverriding();
     testVirtualMethods();
-    testTypeChecking();
+    testObjectPassing();
     return 0;
 }
