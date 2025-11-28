@@ -1,21 +1,19 @@
 ﻿#include <iostream>
 #include <string>
-
+#include <locale>
 using namespace std;
 
-// Базовый класс для тестирования передачи объектов
+// Базовый класс для тестирования возврата объектов
 class Base {
 public:
     Base() {
         cout << "Base constructor" << endl;
     }
 
-    // Конструктор копирования
     Base(const Base& obj) {
         cout << "Base copy constructor" << endl;
     }
 
-    // Конструктор из указателя
     Base(Base* obj) {
         cout << "Base pointer constructor" << endl;
     }
@@ -36,12 +34,10 @@ public:
         cout << "Desc constructor" << endl;
     }
 
-    // Конструктор копирования
     Desc(const Desc& obj) {
         cout << "Desc copy constructor" << endl;
     }
 
-    // Конструктор из указателя
     Desc(Desc* obj) {
         cout << "Desc pointer constructor" << endl;
     }
@@ -59,174 +55,165 @@ public:
     }
 };
 
-// Функции для тестирования передачи объектов
-void func1(Base obj) {
-    cout << "--- Внутри func1(Base obj) ---" << endl;
-    obj.show();
-    cout << "--- Выход из func1 ---" << endl;
+// Функции, возвращающие статические объекты
+Base func1() {
+    cout << "--- Внутри func1() ---" << endl;
+    Base localObj;
+    localObj.show();
+    cout << "--- Возврат из func1 ---" << endl;
+    return localObj;
 }
 
-void func2(Base* obj) {
-    cout << "--- Внутри func2(Base* obj) ---" << endl;
+Base* func2() {
+    cout << "--- Внутри func2() ---" << endl;
+    static Base localObj; // static чтобы объект не уничтожался при выходе
+    localObj.show();
+    cout << "--- Возврат из func2 ---" << endl;
+    return &localObj;
+}
+
+Base& func3() {
+    cout << "--- Внутри func3() ---" << endl;
+    static Base localObj; // static чтобы объект не уничтожался при выходе
+    localObj.show();
+    cout << "--- Возврат из func3 ---" << endl;
+    return localObj;
+}
+
+// Функции, возвращающие динамические объекты
+Base func4() {
+    cout << "--- Внутри func4() ---" << endl;
+    Base* dynamicObj = new Base();
+    dynamicObj->show();
+    cout << "--- Возврат из func4 ---" << endl;
+    return *dynamicObj; // ОПАСНО! Утечка памяти!
+}
+
+Base* func5() {
+    cout << "--- Внутри func5() ---" << endl;
+    Base* dynamicObj = new Base();
+    dynamicObj->show();
+    cout << "--- Возврат из func5 ---" << endl;
+    return dynamicObj;
+}
+
+Base& func6() {
+    cout << "--- Внутри func6() ---" << endl;
+    Base* dynamicObj = new Base();
+    dynamicObj->show();
+    cout << "--- Возврат из func6 ---" << endl;
+    return *dynamicObj; // ОПАСНО! Нужно запомнить указатель для удаления!
+}
+
+void testObjectReturn() {
+    cout << "\n=== Тестирование возврата объектов из функций ===" << endl;
+
+    cout << "\n--- Функции со статическими объектами ---" << endl;
+
+    cout << "\n1. func1() - возврат по значению:" << endl;
+    {
+        Base result = func1();
+        cout << "После получения результата func1:" << endl;
+        result.show();
+    }
+
+    cout << "\n2. func2() - возврат указателя:" << endl;
+    {
+        Base* result = func2();
+        cout << "После получения результата func2:" << endl;
+        result->show();
+    }
+
+    cout << "\n3. func3() - возврат ссылки:" << endl;
+    {
+        Base& result = func3();
+        cout << "После получения результата func3:" << endl;
+        result.show();
+    }
+
+    cout << "\n--- Функции с динамическими объектами ---" << endl;
+
+    cout << "\n4. func4() - возврат по значению (опасно!):" << endl;
+    {
+        Base result = func4();
+        cout << "После получения результата func4:" << endl;
+        result.show();
+        // Утечка памяти! Динамический объект не удален
+    }
+
+    cout << "\n5. func5() - возврат указателя (правильно):" << endl;
+    {
+        Base* result = func5();
+        cout << "После получения результата func5:" << endl;
+        result->show();
+        delete result; // Важно удалить!
+        cout << "После delete result:" << endl;
+    }
+
+    cout << "\n6. func6() - возврат ссылки (опасно!):" << endl;
+    {
+        Base& result = func6();
+        cout << "После получения результата func6:" << endl;
+        result.show();
+        // Утечка памяти! Нет способа удалить объект
+    }
+
+    cout << "\n--- Дополнительные тесты ---" << endl;
+
+    cout << "\n7. Многократный вызов func2 (static):" << endl;
+    {
+        Base* result1 = func2();
+        Base* result2 = func2();
+        cout << "result1 == result2: " << (result1 == result2) << " (один и тот же static объект)" << endl;
+    }
+
+    cout << "\n8. Многократный вызов func5 (dynamic):" << endl;
+    {
+        Base* result1 = func5();
+        Base* result2 = func5();
+        cout << "result1 == result2: " << (result1 == result2) << " (разные динамические объекты)" << endl;
+        delete result1;
+        delete result2;
+    }
+}
+
+// Функции для тестирования передачи объектов (из предыдущего коммита)
+void func1_param(Base obj) {
+    cout << "--- Внутри func1_param(Base obj) ---" << endl;
+    obj.show();
+}
+
+void func2_param(Base* obj) {
+    cout << "--- Внутри func2_param(Base* obj) ---" << endl;
     obj->show();
-
-    // Попытка безопасного приведения
-    Desc* descPtr = dynamic_cast<Desc*>(obj);
-    if (descPtr) {
-        cout << "Безопасное приведение удалось: ";
-        descPtr->specialMethod();
-    }
-    else {
-        cout << "Безопасное приведение не удалось" << endl;
-    }
-    cout << "--- Выход из func2 ---" << endl;
 }
 
-void func3(Base& obj) {
-    cout << "--- Внутри func3(Base& obj) ---" << endl;
+void func3_param(Base& obj) {
+    cout << "--- Внутри func3_param(Base& obj) ---" << endl;
     obj.show();
-
-    // Попытка безопасного приведения
-    Desc* descPtr = dynamic_cast<Desc*>(&obj);
-    if (descPtr) {
-        cout << "Безопасное приведение удалось: ";
-        descPtr->specialMethod();
-    }
-    else {
-        cout << "Безопасное приведение не удалось" << endl;
-    }
-    cout << "--- Выход из func3 ---" << endl;
 }
 
 void testObjectPassing() {
     cout << "\n=== Тестирование передачи объектов в функции ===" << endl;
 
-    cout << "\n--- Тест 1: Передача Base по значению ---" << endl;
-    {
-        Base base;
-        cout << "До вызова func1:" << endl;
-        func1(base);
-        cout << "После вызова func1:" << endl;
-    }
+    cout << "\nПередача Base по значению:" << endl;
+    Base base;
+    func1_param(base);
 
-    cout << "\n--- Тест 2: Передача Base по указателю ---" << endl;
-    {
-        Base base;
-        cout << "До вызова func2:" << endl;
-        func2(&base);
-        cout << "После вызова func2:" << endl;
-    }
+    cout << "\nПередача Base по указателю:" << endl;
+    func2_param(&base);
 
-    cout << "\n--- Тест 3: Передача Base по ссылке ---" << endl;
-    {
-        Base base;
-        cout << "До вызова func3:" << endl;
-        func3(base);
-        cout << "После вызова func3:" << endl;
-    }
+    cout << "\nПередача Base по ссылке:" << endl;
+    func3_param(base);
 
-    cout << "\n--- Тест 4: Передача Desc по значению ---" << endl;
-    {
-        Desc desc;
-        cout << "До вызова func1:" << endl;
-        func1(desc); // Произойдет срезка (slicing)!
-        cout << "После вызова func1:" << endl;
-    }
-
-    cout << "\n--- Тест 5: Передача Desc по указателю ---" << endl;
-    {
-        Desc desc;
-        cout << "До вызова func2:" << endl;
-        func2(&desc);
-        cout << "После вызова func2:" << endl;
-    }
-
-    cout << "\n--- Тест 6: Передача Desc по ссылке ---" << endl;
-    {
-        Desc desc;
-        cout << "До вызова func3:" << endl;
-        func3(desc);
-        cout << "После вызова func3:" << endl;
-    }
-
-    cout << "\n--- Тест 7: Динамическое создание объектов ---" << endl;
-    {
-        Base* basePtr = new Base();
-        Desc* descPtr = new Desc();
-
-        cout << "Вызов func2 с динамическим Base:" << endl;
-        func2(basePtr);
-
-        cout << "Вызов func2 с динамическим Desc:" << endl;
-        func2(descPtr);
-
-        cout << "Вызов func3 с динамическим Base:" << endl;
-        func3(*basePtr);
-
-        cout << "Вызов func3 с динамическим Desc:" << endl;
-        func3(*descPtr);
-
-        delete basePtr;
-        delete descPtr;
-    }
-}
-
-// Остальные классы и функции из предыдущих коммитов
-class VirtualBase {
-public:
-    VirtualBase() {
-        cout << "VirtualBase constructor" << endl;
-    }
-
-    void method1() {
-        cout << "VirtualBase::method1()" << endl;
-        this->method2();
-    }
-
-    virtual void method2() {
-        cout << "VirtualBase::method2()" << endl;
-    }
-
-    virtual ~VirtualBase() {
-        cout << "VirtualBase destructor" << endl;
-    }
-};
-
-class VirtualDesc : public VirtualBase {
-public:
-    VirtualDesc() {
-        cout << "VirtualDesc constructor" << endl;
-    }
-
-    virtual void method2() override {
-        cout << "VirtualDesc::method2()" << endl;
-    }
-
-    virtual ~VirtualDesc() override {
-        cout << "VirtualDesc destructor" << endl;
-    }
-};
-
-void testVirtualMethods() {
-    cout << "\n=== Тестирование виртуальных методов ===" << endl;
-
-    VirtualBase vbase;
-    vbase.method1();
-
-    VirtualDesc vdesc;
-    vdesc.method1();
-
-    VirtualBase* vbasePtr = &vdesc;
-    vbasePtr->method2();
-
-    VirtualBase* ptr = new VirtualDesc();
-    ptr->method1();
-    delete ptr;
+    cout << "\nПередача Desc по значению (срезка!):" << endl;
+    Desc desc;
+    func1_param(desc);
 }
 
 int main() {
     setlocale(LC_ALL, "ru");
-    testVirtualMethods();
     testObjectPassing();
+    testObjectReturn();
     return 0;
 }
