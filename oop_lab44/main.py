@@ -464,7 +464,7 @@ class MainWindow(QMainWindow):
 
     def create_menu(self):
         menu = self.menuBar()
-        edit = menu.addMenu("Правка")
+        edit = menu.addMenu("Navigate")
         a = QAction("Выделить всё", self)
         a.setShortcut(QKeySequence.StandardKey.SelectAll)
         a.triggered.connect(self.canvas.select_all)
