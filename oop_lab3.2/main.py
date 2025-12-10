@@ -738,7 +738,7 @@ class Canvas(QWidget):
         self.update()
 
 
-# ====================== Главное окно ======================
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
