@@ -4,7 +4,6 @@ from PyQt6.QtGui import *
 from PyQt6.QtCore import Qt, QPoint, QRect, QPointF, QLineF
 
 
-# ====================== Фабрика ======================
 class ShapeFactory:
     _registry = {}
 
