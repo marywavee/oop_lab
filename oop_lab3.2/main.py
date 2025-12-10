@@ -559,7 +559,7 @@ class ShapeStorage:
     def __len__(self): return len(self._items)
 
 
-# ====================== Канвас ======================
+
 class Canvas(QWidget):
     def __init__(self):
         super().__init__()
