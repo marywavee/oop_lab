@@ -345,7 +345,7 @@ class LineSegment(Shape):
         return LineSegment(QPoint(*p1), QPoint(*p2), color)
 
 
-# ====================== Группа (Composite) — КЛЮЧЕВАЯ ЧАСТЬ ======================
+
 @ShapeFactory.register('Group')
 class Group(Shape):
     def __init__(self, items=None):
