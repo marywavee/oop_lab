@@ -30,7 +30,6 @@ class ShapeFactory:
         return klass.load_from_file(reader)
 
 
-# ====================== Базовый класс ======================
 class Shape:
     HANDLE_SIZE = 12
 
