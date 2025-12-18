@@ -805,7 +805,7 @@ class Okno(QMainWindow):
         self.setCentralWidget(splitter)
 
         self.toolbar()
-###
+
     def toolbar(self):
         tb = QToolBar()
         self.addToolBar(tb)
