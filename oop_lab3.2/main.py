@@ -785,7 +785,7 @@ class Form(QWidget):
 class Okno(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Main Window")
+        self.setWindowTitle("mainWindow")
         self.resize(1200, 800)
         self.container = FiguresContainer()
         self.form = Form(self.container)
