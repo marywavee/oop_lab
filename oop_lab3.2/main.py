@@ -717,7 +717,7 @@ class Form(QWidget):
                     self.arrow_source = None
                 self.container.notify()
             return
-
+#
         clicked_obj = self._find_object_at(pos)
         ctrl_pressed = event.modifiers() & Qt.KeyboardModifier.ControlModifier
         if not ctrl_pressed:
