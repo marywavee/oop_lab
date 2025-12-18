@@ -820,7 +820,7 @@ class Okno(QMainWindow):
         tb.addAction("Изменить цвет", self.change_color)
         tb.addAction("Сохранить", self.save_project)
         tb.addAction("Загрузить", self.load_project)
-#
+
     def change_color(self):
         col = QColorDialog.getColor()
         if col.isValid():
